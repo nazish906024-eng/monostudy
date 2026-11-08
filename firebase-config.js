@@ -6,6 +6,6 @@ window.MONO_FIREBASE = {
   projectId: "monostudy-9fe6f",
   storageBucket: "monostudy-9fe6f.firebasestorage.app",
   messagingSenderId: "655910592401",
-  appId: "1:655910592401:web:5e78e7e8f31600ffac0430",
-  measurementId: "G-H57XYENX48"
+  appId: "1:655910592401:web:02081bea43f63a97ac0430",
+  measurementId: "G-F1D02WWFYP"
 };

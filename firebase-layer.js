@@ -19,6 +19,12 @@
     const [app, a, f] = await Promise.all([import(BASE + "firebase-app.js"), import(BASE + "firebase-auth.js"), import(BASE + "firebase-firestore.js")]);
     const ap = app.initializeApp(cfg);
     auth = a.getAuth(ap); db = f.getFirestore(ap);
+    // Google Analytics (optional): never let it block or break auth/sync.
+    if (cfg.measurementId) {
+      import(BASE + "firebase-analytics.js")
+        .then(async an => { if (await an.isSupported()) M.analytics = an.getAnalytics(ap); })
+        .catch(() => {});
+    }
     return (sdk = { a, f });
   }
   const toUser = u => u ? { id: u.uid, name: u.displayName || "", email: u.email || null, phone: u.phoneNumber || null, verified: !!u.emailVerified } : null;
