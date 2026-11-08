@@ -1,4 +1,4 @@
-const CACHE = "monostudy-v5";
+const CACHE = "monostudy-v6";
 // Only files that really exist. cache.addAll() rejects if ANY url 404s, which used to kill the whole install.
 const CORE = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json",
   "./chapter-data.js", "./pyq-data.js", "./firebase-config.js", "./firebase-layer.js", "./chapter-data.json", "./pyq-data.json", "./icons/icon.svg"];
