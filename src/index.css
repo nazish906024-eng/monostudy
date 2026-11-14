@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space_grotesk.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/plus_jakarta_sans.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains_mono.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --mono-bg: #0b1020;
+  --mono-panel: #141b33;
+  --mono-panel-elevated: #1b2442;
+  --mono-line: #27325a;
+  --mono-text: #eef1ff;
+  --mono-muted: #8f9bc4;
+  --mono-primary: #8b7dff;
+  --mono-primary-deep: #6a5bf0;
+  --mono-blue: #4aa3ff;
+  --mono-green: #3ddc97;
+  --mono-orange: #ffa94d;
+  --mono-red: #ff6b7a;
+}
+
+html,
+body {
+  background-color: var(--mono-bg);
+  color: var(--mono-text);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.005em;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-mono-data {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

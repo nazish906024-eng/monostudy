@@ -1,6 +1,9 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+!.env.example
 *-debug.log
-.gradle/
-build/
-app/build/
-local.properties
 .DS_Store
