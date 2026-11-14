@@ -2,6 +2,8 @@
 
 Native Android study companion for **JEE & NEET** preparation (Classes 11–12), built with **Kotlin**, **Jetpack Compose**, **Material Design 3**, and **Firebase Firestore + Google Sign-In**.
 
+> **Note about GitHub / GitHub Pages:** This project is now a native Android app (`.apk`), not an HTML/JS website, so **GitHub Pages cannot run it in a web browser**. To run it on Android, use **GitHub Actions** below to download the built APK, build it in **Android Studio**, or preview it in AI Studio.
+
 ## Features
 - **Authentication & Cloud Sync**: Google Sign-In via Jetpack Credential Manager backed by Firebase Authentication and per-user Cloud Firestore storage (`users/{uid}`).
 - **Dashboard**: Syllabus completion %, today's study minutes vs daily goal, task progress, PYQ accuracy, study streak, high-yield weak spots, continue-learning chapters, and quick-toggle daily tasks.
@@ -13,6 +15,18 @@ Native Android study companion for **JEE & NEET** preparation (Classes 11–12),
 - **Study Planner & Pomodoro**: Daily task checklist, 25/45/50/60-minute focus timer presets, session tags, optional completion tone, daily goal customization, and manual study-time logging.
 - **Analytics & Weekly Summary**: Chapter weak-spot heatmap, 7-day study bar chart with goal line, focus distribution by tag, and 900×500 PNG weekly summary card generation & system share.
 - **Backup & Custom Data**: Export/import full study backup JSON, import custom PYQ JSON files, download a question template JSON, and reset user data.
+
+## Build & Download APK from GitHub
+1. Push this repository to GitHub (including `.github/workflows/build-apk.yml`).
+2. Open the **Actions** tab in your GitHub repository and select the latest **Build Android APK** run.
+3. Download the **monostudy-debug-apk** artifact and install `app-debug.apk` on your Android device.
+
+### Building Locally
+1. Decode the debug keystore once at the project root:
+   ```bash
+   base64 -d debug.keystore.base64 > debug.keystore
+   ```
+2. Open the folder in **Android Studio** (or run `gradle assembleDebug` with JDK 21 and Gradle 9.3.1).
 
 ## Data Caveats
 - `app/src/main/assets/pyq-data.json` contains 12 demo practice questions, not official past papers.
