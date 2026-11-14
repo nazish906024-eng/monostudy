@@ -1,25 +1,285 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Every user can only touch their own document and its images.
-    match /users/{uid} {
-      allow read, delete: if request.auth != null && request.auth.uid == uid;
-      allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['schema', 'updatedAt', 'data', 'trimmed'])
-        && request.resource.data.schema == 2
-        && request.resource.data.updatedAt is number
-        && request.resource.data.data is string
-        && request.resource.data.data.size() < 1000000;
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
 
-      match /images/{imageId} {
-        allow read, delete: if request.auth != null && request.auth.uid == uid;
-        allow create, update: if request.auth != null && request.auth.uid == uid
-          && request.resource.data.keys().hasOnly(['data'])
-          && request.resource.data.data is string
-          && request.resource.data.data.size() < 500000
-          && request.resource.data.data.matches('data:image/.*');
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidSubject(sub) {
+      return sub in ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
+    }
+
+    function isValidSubjectOrGeneral(sub) {
+      return sub in ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'General'];
+    }
+
+    function isValidDateKey(d) {
+      return d is string && d.size() == 10 && d.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId is string && data.userId == userId &&
+             data.name is string && data.name.size() <= 40 &&
+             data.cls in ['11', '12'] &&
+             data.exam in ['JEE', 'NEET', 'Both'] &&
+             data.goalMinutes is int && data.goalMinutes >= 15 && data.goalMinutes <= 900;
+    }
+
+    function isValidChapterStatus(data, chapterId) {
+      return data.chapterId is string && data.chapterId == chapterId && data.chapterId.size() <= 64 &&
+             data.status in ['Not Started', 'In Progress', 'Revised', 'Mastered'];
+    }
+
+    function isValidStudyTask(data) {
+      return data.text is string && data.text.size() >= 1 && data.text.size() <= 120 &&
+             isValidSubjectOrGeneral(data.subject) &&
+             data.done is bool &&
+             isValidDateKey(data.date) &&
+             (!('doneOn' in data) || data.doneOn == null || isValidDateKey(data.doneOn));
+    }
+
+    function isValidStudyNote(data) {
+      return data.title is string && data.title.size() <= 120 &&
+             isValidSubjectOrGeneral(data.subject) &&
+             data.body is string && data.body.size() <= 20000 &&
+             data.imageIds is list && data.imageIds.size() <= 6 &&
+             (data.imageIds.size() == 0 || data.imageIds[0] is string);
+    }
+
+    function isValidNoteImage(data) {
+      return data.data is string &&
+             data.data.size() >= 10 && data.data.size() <= 500000 &&
+             data.data.matches('^data:image/.*');
+    }
+
+    function isValidPyqAttempt(data) {
+      return data.qid is string && data.qid.size() >= 1 && data.qid.size() <= 64 &&
+             data.chapterId is string && data.chapterId.size() <= 64 &&
+             isValidSubject(data.subject) &&
+             data.selectedOption is int && data.selectedOption >= 0 && data.selectedOption <= 3 &&
+             data.correct is bool &&
+             data.secs is int && data.secs >= 1 && data.secs <= 7200 &&
+             data.confidence in ['LOW', 'MEDIUM', 'HIGH'] &&
+             data.errorCategory is string && data.errorCategory.size() <= 40 &&
+             isValidDateKey(data.dateKey);
+    }
+
+    function isValidErrorLogEntry(data) {
+      return data.qid is string && data.qid.size() >= 1 && data.qid.size() <= 64 &&
+             data.resolved is bool &&
+             data.category is string && data.category.size() <= 40 &&
+             isValidDateKey(data.dateKey);
+    }
+
+    function isValidFlashcardProgress(data, cardId) {
+      return data.cardId is string && data.cardId == cardId && data.cardId.size() <= 32 &&
+             data.status in ['known', 'review'];
+    }
+
+    function isValidStudySession(data) {
+      return isValidDateKey(data.dateKey) &&
+             data.minutes is int && data.minutes >= 1 && data.minutes <= 900 &&
+             data.tag is string && data.tag.size() <= 80;
+    }
+
+    function isValidCustomPyq(data) {
+      return data.exam in ['JEE', 'NEET'] &&
+             (!('year' in data) || data.year == null || (data.year is int && data.year >= 1970 && data.year <= 2100)) &&
+             isValidSubject(data.subject) &&
+             data.chapterId is string && data.chapterId.size() <= 64 &&
+             data.difficulty in ['Easy', 'Medium', 'Hard'] &&
+             data.tags is list && data.tags.size() <= 8 &&
+             (data.tags.size() == 0 || data.tags[0] is string) &&
+             data.question is string && data.question.size() >= 1 && data.question.size() <= 2000 &&
+             data.options is list && data.options.size() >= 2 && data.options.size() <= 4 &&
+             data.options[0] is string &&
+             data.answerIndex is int && data.answerIndex >= 0 && data.answerIndex < data.options.size() &&
+             data.explain is string && data.explain.size() <= 1500;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) &&
+        incoming().keys().hasAll(['userId', 'name', 'cls', 'exam', 'goalMinutes', 'createdAt', 'updatedAt']) &&
+        incoming().keys().hasOnly(['userId', 'name', 'cls', 'exam', 'goalMinutes', 'createdAt', 'updatedAt']) &&
+        isValidTimestamp(incoming().createdAt) &&
+        isValidTimestamp(incoming().updatedAt) &&
+        isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        isValidTimestamp(incoming().updatedAt) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'cls', 'exam', 'goalMinutes', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /chapter_statuses/{chapterId} {
+        allow get: if isOwner(userId) && isValidId(chapterId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(chapterId) &&
+          incoming().keys().hasAll(['chapterId', 'status', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly(['chapterId', 'status', 'createdAt', 'updatedAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt) &&
+          isValidChapterStatus(incoming(), chapterId);
+        allow update: if isOwner(userId) && isValidId(chapterId) &&
+          isValidChapterStatus(incoming(), chapterId) &&
+          incoming().chapterId == existing().chapterId &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(chapterId);
+      }
+
+      match /tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(taskId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(taskId) &&
+          incoming().keys().hasAll(['text', 'subject', 'done', 'date', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly(['text', 'subject', 'done', 'date', 'doneOn', 'createdAt', 'updatedAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt) &&
+          isValidStudyTask(incoming());
+        allow update: if isOwner(userId) && isValidId(taskId) &&
+          isValidStudyTask(incoming()) &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['text', 'subject', 'done', 'doneOn', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(taskId);
+      }
+
+      match /notes/{noteId} {
+        allow get: if isOwner(userId) && isValidId(noteId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(noteId) &&
+          incoming().keys().hasAll(['title', 'subject', 'body', 'imageIds', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly(['title', 'subject', 'body', 'imageIds', 'createdAt', 'updatedAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt) &&
+          isValidStudyNote(incoming());
+        allow update: if isOwner(userId) && isValidId(noteId) &&
+          isValidStudyNote(incoming()) &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subject', 'body', 'imageIds', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(noteId);
+      }
+
+      match /note_images/{imageId} {
+        allow get: if isOwner(userId) && isValidId(imageId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(imageId) &&
+          incoming().keys().hasAll(['data', 'createdAt']) &&
+          incoming().keys().hasOnly(['data', 'createdAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidNoteImage(incoming());
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(imageId);
+      }
+
+      match /attempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(attemptId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(attemptId) &&
+          incoming().keys().hasAll(['qid', 'chapterId', 'subject', 'selectedOption', 'correct', 'secs', 'confidence', 'errorCategory', 'dateKey', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly(['qid', 'chapterId', 'subject', 'selectedOption', 'correct', 'secs', 'confidence', 'errorCategory', 'dateKey', 'createdAt', 'updatedAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt) &&
+          isValidPyqAttempt(incoming());
+        allow update: if isOwner(userId) && isValidId(attemptId) &&
+          isValidPyqAttempt(incoming()) &&
+          incoming().qid == existing().qid &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['errorCategory', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(attemptId);
+      }
+
+      match /errors/{errorId} {
+        allow get: if isOwner(userId) && isValidId(errorId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(errorId) &&
+          incoming().keys().hasAll(['qid', 'resolved', 'category', 'dateKey', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly(['qid', 'resolved', 'category', 'dateKey', 'createdAt', 'updatedAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt) &&
+          isValidErrorLogEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(errorId) &&
+          isValidErrorLogEntry(incoming()) &&
+          incoming().qid == existing().qid &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['resolved', 'category', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(errorId);
+      }
+
+      match /card_progress/{cardId} {
+        allow get: if isOwner(userId) && isValidId(cardId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(cardId) &&
+          incoming().keys().hasAll(['cardId', 'status', 'createdAt', 'updatedAt']) &&
+          incoming().keys().hasOnly(['cardId', 'status', 'createdAt', 'updatedAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidTimestamp(incoming().updatedAt) &&
+          isValidFlashcardProgress(incoming(), cardId);
+        allow update: if isOwner(userId) && isValidId(cardId) &&
+          isValidFlashcardProgress(incoming(), cardId) &&
+          incoming().cardId == existing().cardId &&
+          incoming().createdAt == existing().createdAt &&
+          isValidTimestamp(incoming().updatedAt) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(cardId);
+      }
+
+      match /study_sessions/{sessionId} {
+        allow get: if isOwner(userId) && isValidId(sessionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(sessionId) &&
+          incoming().keys().hasAll(['dateKey', 'minutes', 'tag', 'createdAt']) &&
+          incoming().keys().hasOnly(['dateKey', 'minutes', 'tag', 'createdAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidStudySession(incoming());
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+      }
+
+      match /custom_pyqs/{questionId} {
+        allow get: if isOwner(userId) && isValidId(questionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(questionId) &&
+          incoming().keys().hasAll(['exam', 'subject', 'chapterId', 'difficulty', 'tags', 'question', 'options', 'answerIndex', 'explain', 'createdAt']) &&
+          incoming().keys().hasOnly(['exam', 'year', 'subject', 'chapterId', 'difficulty', 'tags', 'question', 'options', 'answerIndex', 'explain', 'createdAt']) &&
+          isValidTimestamp(incoming().createdAt) &&
+          isValidCustomPyq(incoming());
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(questionId);
       }
     }
-    match /{document=**} { allow read, write: if false; }
   }
 }

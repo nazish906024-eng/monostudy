@@ -1,14 +1,21 @@
 {
-  "firestore": { "rules": "firestore.rules" },
-  "hosting": {
-    "public": ".",
-    "ignore": ["firebase.json", "firestore.rules", "**/.*", "**/node_modules/**", "data/**", "tools/**", "server.js", "*.md"],
-    "headers": [
-      { "source": "/service-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-      { "source": "**", "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" } ] }
-    ]
+  "firestore": [
+    {
+      "database": "ai-studio-android-monostud-14a8ea60-886c-47a0-9e62-e9e537d0d7b6",
+      "rules": "firestore.rules"
+    }
+  ],
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "auth": {
+      "host": "127.0.0.1",
+      "port": 9099
+    },
+    "ui": {
+      "enabled": false
+    }
   }
 }

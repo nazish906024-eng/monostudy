@@ -1,0 +1,6 @@
+{
+  "name": "monostudy",
+  "description": "JEE & NEET study companion with syllabus tracker, PYQ practice vault, flashcards, error log, notes, study planner, and performance analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

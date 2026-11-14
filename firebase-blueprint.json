@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Student profile and study goal settings for monostudy.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the student." },
+        "name": { "type": "string", "description": "Student display name (0-40 chars)." },
+        "cls": { "type": "string", "enum": ["11", "12"], "description": "Target class." },
+        "exam": { "type": "string", "enum": ["JEE", "NEET", "Both"], "description": "Target entrance exam." },
+        "goalMinutes": { "type": "integer", "description": "Daily study goal in minutes (15-900)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "name", "cls", "exam", "goalMinutes", "createdAt", "updatedAt"]
+    },
+    "ChapterStatus": {
+      "title": "ChapterStatus",
+      "description": "Syllabus progress status for a single chapter.",
+      "type": "object",
+      "properties": {
+        "chapterId": { "type": "string", "description": "Chapter identifier matching catalog ID." },
+        "status": { "type": "string", "enum": ["Not Started", "In Progress", "Revised", "Mastered"] },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["chapterId", "status", "createdAt", "updatedAt"]
+    },
+    "StudyTask": {
+      "title": "StudyTask",
+      "description": "Daily checklist task in the study planner.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Task description (1-120 chars)." },
+        "subject": { "type": "string", "enum": ["Physics", "Chemistry", "Mathematics", "Biology", "General"] },
+        "done": { "type": "boolean" },
+        "date": { "type": "string", "description": "Creation date YYYY-MM-DD." },
+        "doneOn": { "type": "string", "description": "Optional completion date YYYY-MM-DD." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["text", "subject", "done", "date", "createdAt", "updatedAt"]
+    },
+    "StudyNote": {
+      "title": "StudyNote",
+      "description": "Personal Markdown & formula note with optional image references.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Note title (0-120 chars)." },
+        "subject": { "type": "string", "enum": ["Physics", "Chemistry", "Mathematics", "Biology", "General"] },
+        "body": { "type": "string", "description": "Markdown/LaTeX note body (0-20000 chars)." },
+        "imageIds": { "type": "array", "description": "Up to 6 references to note_images docs." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["title", "subject", "body", "imageIds", "createdAt", "updatedAt"]
+    },
+    "NoteImage": {
+      "title": "NoteImage",
+      "description": "Compressed image attachment for a study note.",
+      "type": "object",
+      "properties": {
+        "data": { "type": "string", "description": "Base64 JPEG data URL (data:image/...)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["data", "createdAt"]
+    },
+    "PyqAttempt": {
+      "title": "PyqAttempt",
+      "description": "Logged PYQ practice attempt with confidence and error category.",
+      "type": "object",
+      "properties": {
+        "qid": { "type": "string", "description": "Question ID." },
+        "chapterId": { "type": "string", "description": "Associated chapter ID." },
+        "subject": { "type": "string", "enum": ["Physics", "Chemistry", "Mathematics", "Biology"] },
+        "selectedOption": { "type": "integer", "description": "Selected option index 0..3." },
+        "correct": { "type": "boolean" },
+        "secs": { "type": "integer", "description": "Time taken in seconds (1..7200)." },
+        "confidence": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "errorCategory": { "type": "string", "description": "Error reason category." },
+        "dateKey": { "type": "string", "description": "Attempt date YYYY-MM-DD." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["qid", "chapterId", "subject", "selectedOption", "correct", "secs", "confidence", "errorCategory", "dateKey", "createdAt", "updatedAt"]
+    },
+    "ErrorLogEntry": {
+      "title": "ErrorLogEntry",
+      "description": "Mistake tracked in the Error Log vault.",
+      "type": "object",
+      "properties": {
+        "qid": { "type": "string", "description": "Question ID." },
+        "resolved": { "type": "boolean" },
+        "category": { "type": "string", "description": "Error category." },
+        "dateKey": { "type": "string", "description": "Date YYYY-MM-DD." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["qid", "resolved", "category", "dateKey", "createdAt", "updatedAt"]
+    },
+    "FlashcardProgress": {
+      "title": "FlashcardProgress",
+      "description": "Review status for a flashcard.",
+      "type": "object",
+      "properties": {
+        "cardId": { "type": "string", "description": "Flashcard ID." },
+        "status": { "type": "string", "enum": ["known", "review"] },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["cardId", "status", "createdAt", "updatedAt"]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "Logged Pomodoro or manual focus session.",
+      "type": "object",
+      "properties": {
+        "dateKey": { "type": "string", "description": "Session date YYYY-MM-DD." },
+        "minutes": { "type": "integer", "description": "Duration in minutes (1..900)." },
+        "tag": { "type": "string", "description": "Session tag (0..80 chars)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["dateKey", "minutes", "tag", "createdAt"]
+    },
+    "CustomPyq": {
+      "title": "CustomPyq",
+      "description": "User-imported custom practice question.",
+      "type": "object",
+      "properties": {
+        "exam": { "type": "string", "enum": ["JEE", "NEET"] },
+        "year": { "type": "integer", "description": "Optional exam year." },
+        "subject": { "type": "string", "enum": ["Physics", "Chemistry", "Mathematics", "Biology"] },
+        "chapterId": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
+        "tags": { "type": "array" },
+        "question": { "type": "string" },
+        "options": { "type": "array" },
+        "answerIndex": { "type": "integer" },
+        "explain": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp." }
+      },
+      "required": ["exam", "subject", "chapterId", "difficulty", "tags", "question", "options", "answerIndex", "explain", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Student profile and daily study target."
+    },
+    "/users/{userId}/chapter_statuses/{chapterId}": {
+      "schema": { "$ref": "#/entities/ChapterStatus" },
+      "description": "Per-chapter syllabus mastery status."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/StudyTask" },
+      "description": "Study planner checklist tasks."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/StudyNote" },
+      "description": "Markdown and formula study notes."
+    },
+    "/users/{userId}/note_images/{imageId}": {
+      "schema": { "$ref": "#/entities/NoteImage" },
+      "description": "Compressed image attachments for study notes."
+    },
+    "/users/{userId}/attempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/PyqAttempt" },
+      "description": "Logged PYQ practice attempts."
+    },
+    "/users/{userId}/errors/{errorId}": {
+      "schema": { "$ref": "#/entities/ErrorLogEntry" },
+      "description": "Error log vault entries."
+    },
+    "/users/{userId}/card_progress/{cardId}": {
+      "schema": { "$ref": "#/entities/FlashcardProgress" },
+      "description": "Flashcard mastery statuses."
+    },
+    "/users/{userId}/study_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "Pomodoro and manual study session logs."
+    },
+    "/users/{userId}/custom_pyqs/{questionId}": {
+      "schema": { "$ref": "#/entities/CustomPyq" },
+      "description": "User-imported custom practice questions."
+    }
+  }
+}
